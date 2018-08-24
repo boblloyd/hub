@@ -399,3 +399,20 @@ This example will add a second Job Runner container. It is also possible to remo
 ```
 docker-compose -p hub scale jobrunner=1
 ```
+
+# Using Binary Uploads
+From Hub version 4.9.0, it has an ability to scan binary files.
+
+1. Pull the image **blackducksoftware/hub-upload-cache:1.0.0** from the docker hub (https://hub.docker.com/r/blackducksoftware/hub-upload-cache)
+
+2. Modify hub-psc.env file to set the environment variable USE_BINARY_UPLOADS be 1.
+```
+USE_BINARY_UPLOADS=1
+
+```
+Doing so will configure the nginx to be able to link to a upload cache service, which stores the binary file temporarily.
+
+3. Find the docker-compose.psc.yml and run the command below.
+```
+docker-compose -p hub -f docker-compose.psc.yml up -d
+```

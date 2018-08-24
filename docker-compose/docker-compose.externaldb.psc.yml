@@ -1,4 +1,4 @@
-version: '3.1'
+version: '2.1'
 services:
   cfssl:
     image: blackducksoftware/hub-cfssl:2018.09
@@ -9,12 +9,8 @@ services:
       timeout: 10s
       retries: 5
     user: cfssl:root
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {memory: 640M}
-        reservations: {memory: 640M}
+    restart: always
+    mem_limit: 512M
   logstash:
     image: blackducksoftware/hub-logstash:2018.09
     volumes: ['log-volume:/var/lib/logstash/data']
@@ -24,12 +20,8 @@ services:
       timeout: 10s
       retries: 5
     user: logstash:root
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {memory: 1024M}
-        reservations: {memory: 1024M}
+    restart: always
+    mem_limit: 1024m
   registration:
     image: blackducksoftware/hub-registration:2018.09
     links: [logstash]
@@ -42,12 +34,8 @@ services:
       timeout: 10s
       retries: 5
     user: tomcat:root
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {memory: 640M}
-        reservations: {memory: 640M}
+    restart: always
+    mem_limit: 640M
   zookeeper:
     image: blackducksoftware/hub-zookeeper:2018.09
     links: [logstash]
@@ -58,12 +46,8 @@ services:
       timeout: 10s
       retries: 5
     user: zookeeper:root
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {memory: 384M}
-        reservations: {memory: 384M}
+    restart: always
+    mem_limit: 384M
   solr:
     image: blackducksoftware/hub-solr:2018.09
     links: [logstash, zookeeper]
@@ -74,12 +58,8 @@ services:
       timeout: 10s
       retries: 5
     user: solr:root
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {memory: 640M}
-        reservations: {memory: 640M}
+    restart: always
+    mem_limit: 640M
   authentication:
     image: blackducksoftware/hub-authentication:2018.09
     links: [cfssl, logstash, registration, zookeeper]
@@ -93,12 +73,8 @@ services:
       retries: 15
     user: authentication:root
     environment: {HUB_MAX_MEMORY: 512m}
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {cpus: '1', memory: 1024M}
-        reservations: {memory: 1024M}
+    restart: always
+    mem_limit: 1024M
   webapp:
     image: blackducksoftware/hub-webapp:2018.09
     links: [cfssl, logstash, registration, zookeeper, solr]
@@ -112,12 +88,8 @@ services:
       retries: 15
     user: tomcat:root
     environment: {HUB_MAX_MEMORY: 2048m}
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {cpus: '1', memory: 2560M}
-        reservations: {cpus: '1', memory: 2560M}
+    restart: always
+    mem_limit: 2560M
   scan:
     image: blackducksoftware/hub-scan:2018.09
     links: [cfssl, logstash, registration, zookeeper]
@@ -131,12 +103,8 @@ services:
       retries: 15
     user: tomcat:root
     environment: {HUB_MAX_MEMORY: 2048m}
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {cpus: '1', memory: 2560M}
-        reservations: {cpus: '1', memory: 2560M}
+    restart: always
+    mem_limit: 2560M
   jobrunner:
     image: blackducksoftware/hub-jobrunner:2018.09
     links: [cfssl, logstash, registration, zookeeper, solr]
@@ -148,16 +116,12 @@ services:
       retries: 15
     user: jobrunner:root
     environment: {HUB_MAX_MEMORY: 4096m}
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {cpus: '1', memory: 4608M}
-        reservations: {cpus: '1', memory: 4608M}
+    restart: always
+    mem_limit: 4608M
   webserver:
     image: blackducksoftware/hub-nginx:2018.09
     ports: ['443:8443']
-    env_file: hub-webserver.env
+    env_file: [hub-webserver.env, hub-psc.env]
     links: [webapp, cfssl, documentation]
     volumes: ['webserver-volume:/opt/blackduck/hub/webserver/security']
     healthcheck:
@@ -167,12 +131,8 @@ services:
       timeout: 10s
       retries: 5
     user: nginx:root
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 15s, window: 60s}
-      resources:
-        limits: {memory: 512M}
-        reservations: {memory: 512M}
+    restart: always
+    mem_limit: 640M
   documentation:
     image: blackducksoftware/hub-documentation:2018.09
     links: [logstash]
@@ -183,12 +143,33 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-    deploy:
-      mode: replicated
-      restart_policy: {condition: on-failure, delay: 5s, window: 60s}
-      resources:
-        limits: {memory: 512M}
-        reservations: {memory: 512M}
+    restart: always
+    mem_limit: 512M
+  uploadcache:
+    image: blackducksoftware/hub-uploadcache:1.0.0-SNAPSHOT
+    volumes: ['uploadcache-security-volume:/opt/blackduck/hub/hub-upload-cache/security',
+      'uploadcache-volume:/opt/blackduck/hub/hub-upload-cache/uploads']
+    links: [cfssl]
+    healthcheck:
+      test: [CMD, curl, --insecure, -X, GET, --verbose, 'http://localhost:8086/live?full=1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    user: uploadcache:root
+    env_file: [hub-psc.env, hub-psc.env]
+    restart: always
+  pscworker:
+    image: defensics-store.internal.synopsys.com:5004/appcheck-worker:latest
+    links: [cfssl, rabbitmq]
+    env_file: [hub-psc.env, hub-psc.env]
+    command: /docker-entrypoint.sh
+    restart: always
+  rabbitmq:
+    image: blackducksoftware/hub-rabbitmq:1.0.0-SNAPSHOT
+    depends_on: [cfssl]
+    env_file: [hub-psc.env, hub-psc.env]
+  rabbitmqcfssl: {restart: always}
 volumes: {authentication-volume: null, cert-volume: null, config-volume: null, log-volume: null,
   webserver-volume: null, webapp-volume: null, scan-volume: null, solr6-volume: null,
-  monitor-log-volume: null, zookeeper-data-volume: null, zookeeper-datalog-volume: null}
+  monitor-log-volume: null, zookeeper-data-volume: null, zookeeper-datalog-volume: null,
+  uploadcache-security-volume: null, uploadcache-volume: null}
