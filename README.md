@@ -2,9 +2,9 @@
 
 This repository will contain orchestration files and documentation for using the individual Hub Docker containers. 
 
-## Location of hub 2018.09-SP1 archive:
+## Location of hub 2018.09-SP2 archive:
 
-https://github.com/blackducksoftware/hub/archive/v2018.09-SP1.tar.gz
+https://github.com/blackducksoftware/hub/archive/v2018.09-SP2.tar.gz
 
 ## Important Upgrade Announcement
  
